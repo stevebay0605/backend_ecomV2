@@ -54,6 +54,15 @@ INSTALLED_APPS = [
     'api',
 ]
 
+# Add Cloudinary only in production
+if USE_ENV:
+    try:
+        import cloudinary
+        INSTALLED_APPS.insert(7, 'cloudinary_storage')
+        INSTALLED_APPS.insert(8, 'cloudinary')
+    except ImportError:
+        pass
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -160,8 +169,29 @@ if USE_ENV:
     except ImportError:
         pass
 
+# Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary configuration for production
+if USE_ENV:
+    try:
+        import cloudinary
+        import cloudinary.uploader
+        import cloudinary.api
+        
+        cloudinary_name = config('CLOUDINARY_CLOUD_NAME', default='')
+        
+        if cloudinary_name:  # Only use Cloudinary if configured
+            CLOUDINARY_STORAGE = {
+                'CLOUD_NAME': cloudinary_name,
+                'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+                'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+            }
+            
+            DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    except ImportError:
+        pass
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
