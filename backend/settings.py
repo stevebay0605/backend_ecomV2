@@ -190,6 +190,9 @@ if USE_ENV:
             }
             
             DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+            print(f"✅ Cloudinary configuré avec CLOUD_NAME: {cloudinary_name}")
+        else:
+            print("⚠️ Cloudinary non configuré - variables manquantes")
     except ImportError:
         pass
 
