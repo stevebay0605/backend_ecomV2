@@ -18,6 +18,14 @@ try:
 except ImportError:
     USE_ENV = False
 
+# Import Cloudinary early
+try:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+except ImportError:
+    pass
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -54,14 +62,13 @@ INSTALLED_APPS = [
     'api',
 ]
 
-# Add Cloudinary only in production
-if USE_ENV:
-    try:
-        import cloudinary
-        INSTALLED_APPS.insert(7, 'cloudinary_storage')
-        INSTALLED_APPS.insert(8, 'cloudinary')
-    except ImportError:
-        pass
+# Add Cloudinary apps if available
+try:
+    import cloudinary_storage
+    INSTALLED_APPS.insert(5, 'cloudinary_storage')  # Before staticfiles
+    INSTALLED_APPS.insert(7, 'cloudinary')
+except ImportError:
+    pass
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -169,32 +176,29 @@ if USE_ENV:
     except ImportError:
         pass
 
-# Media files configuration
+# Cloudinary Configuration
+if USE_ENV:
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', config('CLOUDINARY_CLOUD_NAME', default='')),
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY', config('CLOUDINARY_API_KEY', default='')),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', config('CLOUDINARY_API_SECRET', default='')),
+    }
+else:
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
+    }
+
+# Use Cloudinary for media files in production
+if CLOUDINARY_STORAGE['CLOUD_NAME']:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    print(f"✅ Cloudinary actif: {CLOUDINARY_STORAGE['CLOUD_NAME']}")
+else:
+    print("⚠️ Cloudinary désactivé - utilisation du stockage local")
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
-# Cloudinary configuration for production
-if USE_ENV:
-    try:
-        import cloudinary
-        import cloudinary.uploader
-        import cloudinary.api
-        
-        cloudinary_name = config('CLOUDINARY_CLOUD_NAME', default='')
-        
-        if cloudinary_name:  # Only use Cloudinary if configured
-            CLOUDINARY_STORAGE = {
-                'CLOUD_NAME': cloudinary_name,
-                'API_KEY': config('CLOUDINARY_API_KEY', default=''),
-                'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
-            }
-            
-            DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-            print(f"✅ Cloudinary configuré avec CLOUD_NAME: {cloudinary_name}")
-        else:
-            print("⚠️ Cloudinary non configuré - variables manquantes")
-    except ImportError:
-        pass
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
