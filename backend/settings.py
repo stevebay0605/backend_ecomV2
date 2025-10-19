@@ -209,7 +209,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 if USE_ENV:
     CORS_ALLOWED_ORIGINS = config(
         'CORS_ALLOWED_ORIGINS',
-        default='http://localhost:5173,http://localhost:3000'
+        default='http://localhost:5173,http://localhost:3000,https://stevecom.netlify.app'
     ).split(',')
 else:
     CORS_ALLOWED_ORIGINS = [
