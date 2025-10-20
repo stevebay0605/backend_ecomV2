@@ -176,7 +176,12 @@ if USE_ENV:
     except ImportError:
         pass
 
-# Cloudinary Configuration
+# Image Storage Configuration
+# Option 1: ImgBB (Simple, free, no config)
+# Get API key: https://api.imgbb.com/
+IMGBB_API_KEY = os.environ.get('IMGBB_API_KEY', '')
+
+# Option 2: Cloudinary (if you prefer)
 if USE_ENV:
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', config('CLOUDINARY_CLOUD_NAME', default='')),
@@ -190,12 +195,15 @@ else:
         'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
     }
 
-# Use Cloudinary for media files in production
-if CLOUDINARY_STORAGE['CLOUD_NAME']:
+# Choose storage backend
+if IMGBB_API_KEY:
+    DEFAULT_FILE_STORAGE = 'backend.storage.ImgBBStorage'
+    print(f"✅ ImgBB actif")
+elif CLOUDINARY_STORAGE['CLOUD_NAME']:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     print(f"✅ Cloudinary actif: {CLOUDINARY_STORAGE['CLOUD_NAME']}")
 else:
-    print("⚠️ Cloudinary désactivé - utilisation du stockage local")
+    print("⚠️ Stockage cloud désactivé - utilisation locale (non recommandé en production)")
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
